@@ -31,11 +31,9 @@ public class EmailFunction(ILogger<EmailFunction> logger, EmailClient emailClien
                     _logger.LogError("Failed to deserialize email request");
                     throw new InvalidOperationException("Unable to deserialize email request");
                 }
-                else
-                {
-                    _logger.LogInformation("Deserialized EmailSendRequest - Subject: {Subject}, PlainText: {PlainText}, Html: {Html}", 
-                        emailRequest.Subject, emailRequest.PlainText, emailRequest.Html);
-                }
+
+                _logger.LogInformation("Deserialized EmailSendRequest - Subject: {Subject}, PlainText: {PlainText}, Html: {Html}", 
+                    emailRequest.Subject, emailRequest.PlainText, emailRequest.Html);
 
                 var success = await SendEmailAsync(emailRequest);
                 
