@@ -20,6 +20,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, EmailClient emailClien
             string messageBody, FunctionContext context)
         {
             _logger.LogInformation("Processing email message: {MessageBody}", messageBody);
+            _logger.LogInformation("Received email message payload: {MessageBody}", messageBody);
 
             try
             {
@@ -29,6 +30,11 @@ public class EmailFunction(ILogger<EmailFunction> logger, EmailClient emailClien
                 {
                     _logger.LogError("Failed to deserialize email request");
                     throw new InvalidOperationException("Unable to deserialize email request");
+                }
+                else
+                {
+                    _logger.LogInformation("Deserialized EmailSendRequest - Subject: {Subject}, PlainText: {PlainText}, Html: {Html}", 
+                        emailRequest.Subject, emailRequest.PlainText, emailRequest.Html);
                 }
 
                 var success = await SendEmailAsync(emailRequest);
@@ -47,7 +53,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, EmailClient emailClien
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing email message");
-                throw; // Re-throw to trigger retry mechanism
+                throw; 
             }
         }
 
@@ -62,20 +68,8 @@ public class EmailFunction(ILogger<EmailFunction> logger, EmailClient emailClien
                     recipients.Add(new EmailAddress(recipient));
                 }
 
-                var htmlBody = $@"
-                    <html>
-                        <body style='font-family:sans-serif; background:#f9f9f9; padding:2rem;'>
-                            <div style='background:#fff; border-radius:8px; max-width:480px; margin:auto; box-shadow:0 2px 8px #eee; padding:2rem;'>
-                                <h2 style='color:#4a90e2;'>Rooms - Verifieringskod</h2>
-                                <p style='font-size:16px;'>Hi!</p>
-                                <p style='font-size:16px;'>Your verification code is:</p>
-                                <div style='font-size:2rem; font-weight:bold; background:#f0f4fa; color:#4a90e2; padding:1rem; border-radius:4px; text-align:center; margin:1rem 0;'>{request.PlainText}</div>
-                                <p style='font-size:14px; color:#888;'>If you did not request this code, please ignore this email.</p>
-                                <hr style='margin:2rem 0;'/>
-                                <div style='font-size:12px; color:#bbb;'>Rooms Chat Platform</div>
-                            </div>
-                        </body>
-                    </html>";
+                // Using the HTML provided by the request (from AccountService)
+                var htmlBody = request.Html;
 
                 var emailMessage = new EmailMessage(
                     senderAddress: _senderAddress,
