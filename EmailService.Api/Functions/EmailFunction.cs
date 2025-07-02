@@ -17,10 +17,12 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         [ServiceBusTrigger("email-verification", Connection = "ASB_ConnectionString")] string messageBody)
     {
         _logger.LogInformation("Processing VerificationCodeSentEvent: {MessageBody}", messageBody);
-
+        VerificationCodeSentEvent? evt = null;
         try
         {
-            var evt = JsonConvert.DeserializeObject<VerificationCodeSentEvent>(messageBody);
+            _logger.LogInformation("Raw messageBody: {MessageBody}", messageBody);
+            evt = JsonConvert.DeserializeObject<VerificationCodeSentEvent>(messageBody);
+            _logger.LogInformation("Deserialized event: {@evt}", evt);
             
             if (string.IsNullOrEmpty(evt?.Email))
             {
@@ -38,7 +40,8 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing verification email");
+            _logger.LogError(ex, "Exception! messageBody: {MessageBody}, evt: {@evt}", messageBody, evt);
+            throw;
         }
     }
 }

@@ -20,7 +20,7 @@ public class EmailServiceTests
 
         var request = new EmailSendRequest
         {
-            Recipients = new List<string> { "to@example.com" },
+            Recipients = ["to@example.com"],
             Subject = "Test Subject",
             PlainText = "Test plain text",
             Html = "<b>Test HTML</b>"
@@ -52,7 +52,7 @@ public class EmailServiceTests
 
         var request = new EmailSendRequest
         {
-            Recipients = new List<string> { "to@example.com" },
+            Recipients = ["to@example.com"],
             Subject = "Test Subject",
             PlainText = "Test plain text",
             Html = "<b>Test HTML</b>"
@@ -84,7 +84,7 @@ public class EmailServiceTests
 
         var request = new EmailSendRequest
         {
-            Recipients = new List<string> { "to@example.com" },
+            Recipients = ["to@example.com"],
             Subject = "Test Subject",
             PlainText = "Test plain text",
             Html = "<b>Test HTML</b>"
@@ -126,7 +126,7 @@ public class EmailServiceTests
 
         var request = new EmailSendRequest
         {
-            Recipients = new List<string> { "to@example.com" },
+            Recipients = ["to@example.com"],
             Subject = "Test Subject",
             PlainText = "Test plain text",
             Html = "<b>Test HTML</b>"
@@ -168,7 +168,7 @@ public class EmailServiceTests
 
         var request = new EmailSendRequest
         {
-            Recipients = new List<string> { "to@example.com" },
+            Recipients = ["to@example.com"],
             Subject = "Test Subject",
             PlainText = "Test plain text",
             Html = "<b>Test HTML</b>"
