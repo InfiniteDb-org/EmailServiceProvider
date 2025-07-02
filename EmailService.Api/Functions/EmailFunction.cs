@@ -1,94 +1,44 @@
-using Azure;
-using Azure.Communication.Email;
+using EmailService.Api.Messaging;
 using EmailService.Api.Models;
+using EmailService.Api.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace EmailService.Api.Functions;
 
-public class EmailFunction(ILogger<EmailFunction> logger, EmailClient emailClient)
+public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailService)
 {
-        private readonly ILogger<EmailFunction> _logger = logger;
-        private readonly EmailClient _emailClient = emailClient;
-        private readonly string _senderAddress = Environment.GetEnvironmentVariable("ACS_SenderAddress") 
-                                                 ?? throw new InvalidOperationException("ACS_SenderAddress environment variable is not set");
+    private readonly ILogger<EmailFunction> _logger = logger;
+    private readonly IEmailService _emailService = emailService;
 
-        [Function("ProcessEmailQueue")]
-        public async Task ProcessEmailQueue(
-            [ServiceBusTrigger("email-verification", Connection = "ASB_ConnectionString")]
-            string messageBody, FunctionContext context)
+    [Function("ProcessEmailVerificationQueue")]
+    public async Task ProcessEmailVerificationQueue(
+        [ServiceBusTrigger("email-verification", Connection = "ASB_ConnectionString")] string messageBody)
+    {
+        _logger.LogInformation("Processing VerificationCodeSentEvent: {MessageBody}", messageBody);
+
+        try
         {
-            _logger.LogInformation("Processing email message: {MessageBody}", messageBody);
-            _logger.LogInformation("Received email message payload: {MessageBody}", messageBody);
-
-            try
+            var evt = JsonConvert.DeserializeObject<VerificationCodeSentEvent>(messageBody);
+            
+            if (string.IsNullOrEmpty(evt?.Email))
             {
-                var emailRequest = JsonConvert.DeserializeObject<EmailSendRequest>(messageBody);
-                
-                if (emailRequest == null)
-                {
-                    _logger.LogError("Failed to deserialize email request");
-                    throw new InvalidOperationException("Unable to deserialize email request");
-                }
-
-                _logger.LogInformation("Deserialized EmailSendRequest - Subject: {Subject}, PlainText: {PlainText}, Html: {Html}", 
-                    emailRequest.Subject, emailRequest.PlainText, emailRequest.Html);
-
-                var success = await SendEmailAsync(emailRequest);
-                
-                if (success)
-                {
-                    _logger.LogInformation("Email sent successfully to {RecipientCount} recipients", 
-                        emailRequest.Recipients?.Count ?? 0);
-                }
-                else
-                {
-                    _logger.LogError("Failed to send email");
-                    throw new InvalidOperationException("Failed to send email");
-                }
+                _logger.LogError("Invalid VerificationCodeSentEvent or missing email");
+                return;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing email message");
-                throw; 
-            }
+            
+            var emailRequest = EmailRequestFactory.CreateVerificationEmail(evt.Email, evt.Code.ToString());
+            var success = await _emailService.SendEmailAsync(emailRequest);
+
+            if (success)
+                _logger.LogInformation("Verification email sent successfully to {Recipient}", evt.Email);
+            else
+                _logger.LogError("Failed to send verification email to {Recipient}", evt.Email);
         }
-
-        private async Task<bool> SendEmailAsync(EmailSendRequest request)
+        catch (Exception ex)
         {
-            try
-            {
-                var recipients = new List<EmailAddress>();
-
-                foreach (var recipient in request.Recipients)
-                {
-                    recipients.Add(new EmailAddress(recipient));
-                }
-
-                // Using the HTML provided by the request (from AccountService)
-                var htmlBody = request.Html;
-
-                var emailMessage = new EmailMessage(
-                    senderAddress: _senderAddress,
-                    content: new EmailContent(request.Subject)
-                    {
-                        PlainText = request.PlainText, 
-                        Html = htmlBody 
-                    },
-                    recipients: new EmailRecipients(recipients)
-                );
-
-                var emailSendOperation = await _emailClient.SendAsync(
-                    WaitUntil.Completed, 
-                    emailMessage);
-
-                return emailSendOperation.HasCompleted;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending email via Azure Communication Service");
-                return false;
-            }
+            _logger.LogError(ex, "Error processing verification email");
         }
     }
+}

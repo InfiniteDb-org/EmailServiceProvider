@@ -1,1 +1,3 @@
 .idea
+/EmailService_Tests/bin/
+/EmailService_Tests/obj/

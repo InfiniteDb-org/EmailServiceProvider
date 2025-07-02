@@ -1,6 +1,6 @@
-using AccountService.Contracts.Requests;
+using EmailService.Api.Models;
 
-namespace Infrastructure.Messaging;
+namespace EmailService.Api.Messaging;
 
 public static class EmailRequestFactory
 {

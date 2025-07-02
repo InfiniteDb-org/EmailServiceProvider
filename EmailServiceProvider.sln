@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService.Api", "EmailService.Api\EmailService.Api.csproj", "{70B1DCA5-A249-4870-8978-B96C160D223E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService_Tests", "EmailService_Tests\EmailService_Tests.csproj", "{6A239B58-6F70-4A5A-9764-1D21AA0AD714}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{70B1DCA5-A249-4870-8978-B96C160D223E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70B1DCA5-A249-4870-8978-B96C160D223E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70B1DCA5-A249-4870-8978-B96C160D223E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A239B58-6F70-4A5A-9764-1D21AA0AD714}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A239B58-6F70-4A5A-9764-1D21AA0AD714}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A239B58-6F70-4A5A-9764-1D21AA0AD714}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A239B58-6F70-4A5A-9764-1D21AA0AD714}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

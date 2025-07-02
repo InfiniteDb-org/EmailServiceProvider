@@ -1,4 +1,4 @@
-namespace EmailService.Api.Functions;
+namespace EmailService.Api.Models;
 
 public class VerificationCodeSentEvent
 {
