@@ -20,12 +20,12 @@ var acsConnectionString = builder.Configuration["ACS_ConnectionString"]
 var asbConnectionString = builder.Configuration["ASB_ConnectionString"] 
     ?? throw new InvalidOperationException("ASB_ConnectionString is not set");
 
-var asbQueueName = builder.Configuration["ASB_QueueName"] 
-    ?? throw new InvalidOperationException("ASB_QueueName is not set");
+var asbVerificationRequestsQueue = builder.Configuration["ASB_VerificationRequestsQueue"] 
+                                   ?? throw new InvalidOperationException("ASB_VerificationRequestsQueue is not set");
 
 
 builder.Services.AddSingleton(_ => new EmailClient(acsConnectionString));
 builder.Services.AddSingleton(_ => new ServiceBusClient(asbConnectionString));
-builder.Services.AddSingleton<EmailService.Api.Services.EmailService>();
+builder.Services.AddSingleton<IEmailService, EmailService.Api.Services.EmailService>();
 
 builder.Build().Run();

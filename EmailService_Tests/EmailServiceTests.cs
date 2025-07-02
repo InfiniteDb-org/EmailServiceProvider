@@ -2,6 +2,7 @@ using Azure;
 using Azure.Communication.Email;
 using EmailService.Api.Models;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -26,13 +27,15 @@ public class EmailServiceTests
             Html = "<b>Test HTML</b>"
         };
 
+        var mockLogger = new Mock<ILogger<EmailService.Api.Services.EmailService>>();
+
         // Mock SendAsync to return a completed operation
         mockClient.Setup(c => c.SendAsync(
             It.IsAny<WaitUntil>(),
             It.IsAny<EmailMessage>(),
             CancellationToken.None)).ReturnsAsync(Mock.Of<EmailSendOperation>(op => op.HasCompleted == true));
 
-        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object);
+        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object, mockLogger.Object);
 
         // Act
         var result = await service.SendEmailAsync(request);
@@ -58,13 +61,15 @@ public class EmailServiceTests
             Html = "<b>Test HTML</b>"
         };
 
+        var mockLogger = new Mock<ILogger<EmailService.Api.Services.EmailService>>();
+
         // Mock SendAsync to return a not-completed operation
         mockClient.Setup(c => c.SendAsync(
             It.IsAny<WaitUntil>(),
             It.IsAny<EmailMessage>(),
             CancellationToken.None)).ReturnsAsync(Mock.Of<EmailSendOperation>(op => op.HasCompleted == false));
 
-        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object);
+        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object, mockLogger.Object);
 
         // Act
         var result = await service.SendEmailAsync(request);
@@ -90,6 +95,8 @@ public class EmailServiceTests
             Html = "<b>Test HTML</b>"
         };
 
+        var mockLogger = new Mock<ILogger<EmailService.Api.Services.EmailService>>();
+
         EmailSendOperation op = Mock.Of<EmailSendOperation>(o => o.HasCompleted == true);
         EmailMessage? capturedMessage = null;
         mockClient.Setup(c => c.SendAsync(
@@ -99,7 +106,7 @@ public class EmailServiceTests
             .Callback<WaitUntil, EmailMessage, CancellationToken>((_, msg, _) => capturedMessage = msg)
             .ReturnsAsync(op);
 
-        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object);
+        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object, mockLogger.Object);
 
         // Act
         var result = await service.SendEmailAsync(request);
@@ -132,12 +139,14 @@ public class EmailServiceTests
             Html = "<b>Test HTML</b>"
         };
 
+        var mockLogger = new Mock<ILogger<EmailService.Api.Services.EmailService>>();
+
         mockClient.Setup(c => c.SendAsync(
             It.IsAny<WaitUntil>(),
             It.IsAny<EmailMessage>(),
             CancellationToken.None)).ThrowsAsync(new Exception("Network error"));
 
-        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object);
+        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object, mockLogger.Object);
 
         // Act
         bool result;
@@ -173,7 +182,10 @@ public class EmailServiceTests
             PlainText = "Test plain text",
             Html = "<b>Test HTML</b>"
         };
-        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object);
+
+        var mockLogger = new Mock<ILogger<EmailService.Api.Services.EmailService>>();
+
+        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object, mockLogger.Object);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendEmailAsync(request));
@@ -197,6 +209,8 @@ public class EmailServiceTests
             Html = "<b>Test HTML</b>"
         };
 
+        var mockLogger = new Mock<ILogger<EmailService.Api.Services.EmailService>>();
+
         EmailSendOperation op = Mock.Of<EmailSendOperation>(o => o.HasCompleted == true);
         EmailMessage? capturedMessage = null;
         mockClient.Setup(c => c.SendAsync(
@@ -206,7 +220,7 @@ public class EmailServiceTests
             .Callback<WaitUntil, EmailMessage, CancellationToken>((_, msg, _) => capturedMessage = msg)
             .ReturnsAsync(op);
 
-        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object);
+        var service = new EmailService.Api.Services.EmailService(config, mockClient.Object, mockLogger.Object);
 
         // Act
         var result = await service.SendEmailAsync(request);

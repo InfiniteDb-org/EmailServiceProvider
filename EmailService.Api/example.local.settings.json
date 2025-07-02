@@ -5,6 +5,7 @@
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "ACS_ConnectionString": "",
     "ACS_SenderAddress": "",
-    "ASB_ConnectionString": ""
+    "ASB_ConnectionString": "",
+    "ASB_VerificationRequestsQueue": ""
   }
 }

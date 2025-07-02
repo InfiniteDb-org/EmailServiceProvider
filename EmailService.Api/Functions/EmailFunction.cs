@@ -16,20 +16,25 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
     public async Task ProcessEmailVerificationQueue(
         [ServiceBusTrigger("email-verification", Connection = "ASB_ConnectionString")] string messageBody)
     {
-        _logger.LogInformation("Processing VerificationCodeSentEvent: {MessageBody}", messageBody);
         VerificationCodeSentEvent? evt = null;
         try
         {
-            _logger.LogInformation("Raw messageBody: {MessageBody}", messageBody);
             evt = JsonConvert.DeserializeObject<VerificationCodeSentEvent>(messageBody);
-            _logger.LogInformation("Deserialized event: {@evt}", evt);
-            
-            if (string.IsNullOrEmpty(evt?.Email))
+            if (evt == null)
             {
-                _logger.LogError("Invalid VerificationCodeSentEvent or missing email");
+                _logger.LogError("Deserialization failed: evt is null. messageBody: {MessageBody}", messageBody);
                 return;
             }
-            
+            if (string.IsNullOrEmpty(evt.Email))
+            {
+                _logger.LogError("Invalid VerificationCodeSentEvent: Email is null or empty. {@evt}", evt);
+                return;
+            }
+            if (evt.Code == 0)
+            {
+                _logger.LogWarning("VerificationCodeSentEvent: Code is 0. {@evt}", evt);
+            }
+
             var emailRequest = EmailRequestFactory.CreateVerificationEmail(evt.Email, evt.Code.ToString());
             var success = await _emailService.SendEmailAsync(emailRequest);
 
@@ -40,7 +45,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception! messageBody: {MessageBody}, evt: {@evt}", messageBody, evt);
+            _logger.LogError(ex, "[EXCEPTION] messageBody: {MessageBody}, evt: {@evt}, Exception: {ExceptionMessage}", messageBody, evt, ex.Message);
             throw;
         }
     }
