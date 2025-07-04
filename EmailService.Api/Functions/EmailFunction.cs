@@ -14,7 +14,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
 
     [Function("ProcessEmailVerificationQueue")]
     public async Task ProcessEmailVerificationQueue(
-        [ServiceBusTrigger("email-verification", Connection = "ASB_ConnectionString")] string messageBody)
+        [ServiceBusTrigger("verification-code-emails", Connection = "ASB_ConnectionString")] string messageBody)
     {
         VerificationCodeSentEvent? evt = null;
         try
@@ -26,7 +26,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
                 return;
             }
             
-            _logger.LogInformation("MessageBody received: {Body}", messageBody);
+            _logger.LogInformation("Verification email request received from verification-code-emails queue: {Body}", messageBody);
             _logger.LogInformation("Deserialized VerificationCodeSentEvent: Email={Email}, Code={Code}", evt.Email, evt.Code);
             
             if (string.IsNullOrEmpty(evt.Email))
@@ -50,6 +50,59 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         catch (Exception ex)
         {
             _logger.LogError(ex, "[EXCEPTION] messageBody: {MessageBody}, evt: {@evt}, Exception: {ExceptionMessage}", messageBody, evt, ex.Message);
+            throw;
+        }
+    }
+
+    [Function("ProcessAccountEventsQueue")]
+    public async Task ProcessAccountEventsQueue(
+        [ServiceBusTrigger("account-lifecycle-events", Connection = "ASB_ConnectionString")] string messageBody)
+    {
+        AccountMessageEvent? evt = null;
+        try
+        {
+            evt = JsonConvert.DeserializeObject<AccountMessageEvent>(messageBody);
+            if (evt == null)
+            {
+                _logger.LogError("Deserialization failed: evt is null. messageBody: {MessageBody}", messageBody);
+                return;
+            }
+            
+            _logger.LogInformation("Account event received from account-lifecycle-events queue: {Body}", messageBody);
+            _logger.LogInformation("Deserialized AccountMessageEvent: EventType={EventType}, Email={Email}, UserId={UserId}", 
+                evt.EventType, evt.Email, evt.UserId);
+            
+            if (string.IsNullOrEmpty(evt.Email))
+            {
+                _logger.LogError("Invalid AccountMessageEvent: Email is null or empty. {@evt}", evt);
+                return;
+            }
+
+            var emailRequest = evt.EventType switch
+            {
+                "AccountCreated" => EmailRequestFactory.CreateWelcomeEmail(evt.Email),
+                "PasswordResetRequested" => EmailRequestFactory.CreatePasswordResetEmail(evt.Email, evt.Token ?? ""),
+                "AccountDeleted" => EmailRequestFactory.CreateAccountDeletedEmail(evt.Email),
+                _ => null
+            };
+
+            if (emailRequest == null)
+            {
+                _logger.LogWarning("Unknown EventType: {EventType}. Skipping email.", evt.EventType);
+                return;
+            }
+
+            var success = await _emailService.SendEmailAsync(emailRequest);
+
+            if (success)
+                _logger.LogInformation("{EventType} email sent successfully to {Recipient}", evt.EventType, evt.Email);
+            else
+                _logger.LogError("Failed to send {EventType} email to {Recipient}", evt.EventType, evt.Email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[EXCEPTION] messageBody: {MessageBody}, evt: {@evt}, Exception: {ExceptionMessage}", 
+                messageBody, evt, ex.Message);
             throw;
         }
     }

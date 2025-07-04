@@ -20,7 +20,7 @@ public class EmailService(IConfiguration configuration, EmailClient client, ILog
     public async Task<bool> SendEmailAsync(EmailSendRequest request)
     {
         var senderAddress = _configuration["ACS_SenderAddress"];
-        _logger.LogInformation("Using sender address: {SenderAddress}", senderAddress); // Log for troubleshooting
+        _logger.LogInformation("Using sender address: {SenderAddress}", senderAddress);
         if (string.IsNullOrWhiteSpace(senderAddress))
             throw new InvalidOperationException("Sender address is not configured.");
 
@@ -37,7 +37,7 @@ public class EmailService(IConfiguration configuration, EmailClient client, ILog
                 },
                 recipients: new EmailRecipients(recipients));
 
-            EmailSendOperation emailSendOperation = await _client.SendAsync(WaitUntil.Completed, emailMessage);
+            var emailSendOperation = await _client.SendAsync(WaitUntil.Completed, emailMessage);
             return emailSendOperation.HasCompleted;
         }
         catch(Exception ex)
