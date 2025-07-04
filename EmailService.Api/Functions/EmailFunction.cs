@@ -25,6 +25,10 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
                 _logger.LogError("Deserialization failed: evt is null. messageBody: {MessageBody}", messageBody);
                 return;
             }
+            
+            _logger.LogInformation("MessageBody received: {Body}", messageBody);
+            _logger.LogInformation("Deserialized VerificationCodeSentEvent: Email={Email}, Code={Code}", evt.Email, evt.Code);
+            
             if (string.IsNullOrEmpty(evt.Email))
             {
                 _logger.LogError("Invalid VerificationCodeSentEvent: Email is null or empty. {@evt}", evt);

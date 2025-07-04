@@ -6,6 +6,6 @@
     "ACS_ConnectionString": "",
     "ACS_SenderAddress": "",
     "ASB_ConnectionString": "",
-    "ASB_VerificationRequestsQueue": ""
+    "ASB_EmailQueue": ""
   }
 }
