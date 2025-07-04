@@ -1,4 +1,6 @@
 using Azure.Communication.Email;
+using Azure.Messaging.ServiceBus;
+using EmailService.Api.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,9 +14,18 @@ builder.Services
     .AddApplicationInsightsTelemetryWorkerService()
     .ConfigureFunctionsApplicationInsights();
 
-var acsConnectionString = builder.Configuration["ACS_ConnectionString"]
-                          ?? throw new InvalidOperationException("ACS_ConnectionString is not set");
+var acsConnectionString = builder.Configuration["ACS_ConnectionString"] 
+    ?? throw new InvalidOperationException("ACS_ConnectionString is not set");
 
-builder.Services.AddSingleton(new EmailClient(acsConnectionString));
+var asbConnectionString = builder.Configuration["ASB_ConnectionString"] 
+    ?? throw new InvalidOperationException("ASB_ConnectionString is not set");
+
+var asbVerificationRequestsQueue = builder.Configuration["ASB_VerificationRequestsQueue"] 
+                                   ?? throw new InvalidOperationException("ASB_VerificationRequestsQueue is not set");
+
+
+builder.Services.AddSingleton(_ => new EmailClient(acsConnectionString));
+builder.Services.AddSingleton(_ => new ServiceBusClient(asbConnectionString));
+builder.Services.AddSingleton<IEmailService, EmailService.Api.Services.EmailService>();
 
 builder.Build().Run();
