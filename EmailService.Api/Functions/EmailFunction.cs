@@ -7,10 +7,11 @@ using Newtonsoft.Json;
 
 namespace EmailService.Api.Functions;
 
-public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailService)
+public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailService, EmailRequestFactory emailRequestFactory)
 {
     private readonly ILogger<EmailFunction> _logger = logger;
     private readonly IEmailService _emailService = emailService;
+    private readonly EmailRequestFactory _emailRequestFactory = emailRequestFactory;
 
     [Function("ProcessEmailVerificationQueue")]
     public async Task ProcessEmailVerificationQueue(
@@ -80,9 +81,9 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
 
             var emailRequest = evt.EventType switch
             {
-                "AccountCreated" => EmailRequestFactory.CreateWelcomeEmail(evt.Email),
-                "PasswordResetRequested" => EmailRequestFactory.CreatePasswordResetEmail(evt.Email, evt.Token ?? ""),
-                "AccountDeleted" => EmailRequestFactory.CreateAccountDeletedEmail(evt.Email),
+                "AccountCreated" => _emailRequestFactory.CreateWelcomeEmail(evt.Email),
+                "PasswordResetRequested" => _emailRequestFactory.CreatePasswordResetEmail(evt.Email, evt.Token ?? ""),
+                "AccountDeleted" => _emailRequestFactory.CreateAccountDeletedEmail(evt.Email),
                 _ => null
             };
 

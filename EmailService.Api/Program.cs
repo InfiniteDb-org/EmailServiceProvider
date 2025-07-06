@@ -1,5 +1,6 @@
 using Azure.Communication.Email;
 using Azure.Messaging.ServiceBus;
+using EmailService.Api.Messaging;
 using EmailService.Api.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
@@ -23,5 +24,6 @@ var asbConnectionString = builder.Configuration["ASB_ConnectionString"]
 builder.Services.AddSingleton(_ => new EmailClient(acsConnectionString));
 builder.Services.AddSingleton(_ => new ServiceBusClient(asbConnectionString));
 builder.Services.AddSingleton<IEmailService, EmailService.Api.Services.EmailService>();
+builder.Services.AddSingleton<EmailRequestFactory>();
 
 builder.Build().Run();
