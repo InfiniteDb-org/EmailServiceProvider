@@ -63,15 +63,13 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         try
         {
             evt = JsonConvert.DeserializeObject<AccountMessageEvent>(messageBody);
-            if (evt == null)
-            {
-                _logger.LogError("Deserialization failed: evt is null. messageBody: {MessageBody}", messageBody);
-                return;
-            }
-            
+            _logger.LogInformation("Received AccountMessageEvent: {@evt}", evt);
             _logger.LogInformation("Account event received from account-lifecycle-events queue: {Body}", messageBody);
-            _logger.LogInformation("Deserialized AccountMessageEvent: EventType={EventType}, Email={Email}, UserId={UserId}", 
-                evt.EventType, evt.Email, evt.UserId);
+            if (evt != null)
+            {
+                _logger.LogInformation("Deserialized AccountMessageEvent: EventType={EventType}, Email={Email}, UserId={UserId}, ResetToken={ResetToken}", 
+                    evt.EventType, evt.Email, evt.UserId, evt.ResetToken);
+            }
             
             if (string.IsNullOrEmpty(evt.Email))
             {
@@ -82,7 +80,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
             var emailRequest = evt.EventType switch
             {
                 "AccountCreated" => _emailRequestFactory.CreateWelcomeEmail(evt.Email),
-                "PasswordResetRequested" => _emailRequestFactory.CreatePasswordResetEmail(evt.Email, evt.Token ?? ""),
+                "PasswordResetRequested" => _emailRequestFactory.CreatePasswordResetEmail(evt.Email, evt.ResetToken ?? ""),
                 "AccountDeleted" => _emailRequestFactory.CreateAccountDeletedEmail(evt.Email),
                 _ => null
             };

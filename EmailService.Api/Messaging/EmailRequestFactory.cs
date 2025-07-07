@@ -1,11 +1,20 @@
 using EmailService.Api.Models;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EmailService.Api.Messaging;
 
-public class EmailRequestFactory(IConfiguration config)
+public class EmailRequestFactory
 { 
-  private readonly string? _frontendBaseUrl = config["FrontendBaseUrl"];
+  private readonly string? _frontendBaseUrl;
+  private readonly ILogger<EmailRequestFactory> _logger;
+
+  public EmailRequestFactory(IConfiguration config, ILogger<EmailRequestFactory> logger)
+  {
+    _frontendBaseUrl = config["FrontendBaseUrl"];
+    _logger = logger;
+    _logger.LogInformation("EmailRequestFactory initialized with FrontendBaseUrl={BaseUrl}", _frontendBaseUrl);
+  }
 
   public static EmailSendRequest CreateVerificationEmail(string recipient, string code)
   {
@@ -107,7 +116,10 @@ public class EmailRequestFactory(IConfiguration config)
 
   public EmailSendRequest CreatePasswordResetEmail(string recipient, string token)
   {
+    _logger.LogInformation("Building reset link with baseUrl={BaseUrl}, token={Token}, email={Email}", _frontendBaseUrl, token, recipient);
     var resetUrl = $"{_frontendBaseUrl}/reset-password?token={token}&email={recipient}";
+    _logger.LogInformation("Generated resetUrl: {ResetUrl}", resetUrl);
+    
     var subject = "InfiniteDb - Reset Password";
     
     var plainTextContent = 
