@@ -21,24 +21,8 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         try
         {
             evt = JsonConvert.DeserializeObject<VerificationCodeSentEvent>(messageBody);
-            if (evt == null)
-            {
-                _logger.LogError("Deserialization failed: evt is null. messageBody: {MessageBody}", messageBody);
-                return;
-            }
-            
-            _logger.LogInformation("Verification email request received from verification-code-emails queue: {Body}", messageBody);
-            _logger.LogInformation("Deserialized VerificationCodeSentEvent: Email={Email}, Code={Code}", evt.Email, evt.Code);
-            
-            if (string.IsNullOrEmpty(evt.Email))
-            {
-                _logger.LogError("Invalid VerificationCodeSentEvent: Email is null or empty. {@evt}", evt);
-                return;
-            }
-            if (evt.Code == 0)
-            {
-                _logger.LogWarning("VerificationCodeSentEvent: Code is 0. {@evt}", evt);
-            }
+            if (evt?.Email is not { Length: > 0 }) return;
+            if (evt.Code == 0) _logger.LogWarning("VerificationCodeSentEvent: Code is 0. {@evt}", evt);
 
             var emailRequest = EmailRequestFactory.CreateVerificationEmail(evt.Email, evt.Code.ToString());
             var success = await _emailService.SendEmailAsync(emailRequest);
@@ -63,20 +47,17 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         try
         {
             evt = JsonConvert.DeserializeObject<AccountMessageEvent>(messageBody);
+
+            // log event for traceability
             _logger.LogInformation("Received AccountMessageEvent: {@evt}", evt);
-            _logger.LogInformation("Account event received from account-lifecycle-events queue: {Body}", messageBody);
-            if (evt != null)
-            {
-                _logger.LogInformation("Deserialized AccountMessageEvent: EventType={EventType}, Email={Email}, UserId={UserId}, ResetToken={ResetToken}", 
-                    evt.EventType, evt.Email, evt.UserId, evt.ResetToken);
-            }
-            
-            if (string.IsNullOrEmpty(evt.Email))
+
+            if (evt == null || string.IsNullOrEmpty(evt.Email))
             {
                 _logger.LogError("Invalid AccountMessageEvent: Email is null or empty. {@evt}", evt);
                 return;
             }
 
+            // build email based on event type
             var emailRequest = evt.EventType switch
             {
                 "AccountCreated" => _emailRequestFactory.CreateWelcomeEmail(evt.Email),
@@ -91,6 +72,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
                 return;
             }
 
+            // send email and log result
             var success = await _emailService.SendEmailAsync(emailRequest);
 
             if (success)
@@ -100,6 +82,7 @@ public class EmailFunction(ILogger<EmailFunction> logger, IEmailService emailSer
         }
         catch (Exception ex)
         {
+            // log and rethrow on error
             _logger.LogError(ex, "[EXCEPTION] messageBody: {MessageBody}, evt: {@evt}, Exception: {ExceptionMessage}", 
                 messageBody, evt, ex.Message);
             throw;

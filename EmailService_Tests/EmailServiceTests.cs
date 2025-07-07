@@ -156,7 +156,7 @@ public class EmailServiceTests
         }
         catch
         {
-            // Om implementationen inte hanterar exception, faila testet
+            // if implementation does not handle exception, fail test
             Assert.Fail("Exception should be handled by EmailService");
             return;
         }

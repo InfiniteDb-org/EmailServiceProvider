@@ -13,6 +13,7 @@ public class EmailRequestFactory
   {
     _frontendBaseUrl = config["FrontendBaseUrl"];
     _logger = logger;
+    // loads frontend base URL from config for password reset links
     _logger.LogInformation("EmailRequestFactory initialized with FrontendBaseUrl={BaseUrl}", _frontendBaseUrl);
   }
 

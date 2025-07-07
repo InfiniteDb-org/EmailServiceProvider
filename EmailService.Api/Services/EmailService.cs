@@ -17,6 +17,7 @@ public class EmailService(IConfiguration configuration, EmailClient client, ILog
     private readonly EmailClient _client = client;
     private readonly ILogger<EmailService> _logger = logger;
 
+    // Sends email using Azure Communication Services
     public async Task<bool> SendEmailAsync(EmailSendRequest request)
     {
         var senderAddress = _configuration["ACS_SenderAddress"];
@@ -26,8 +27,10 @@ public class EmailService(IConfiguration configuration, EmailClient client, ILog
 
         try
         {
+            // Build recipient list for Azure email API
             var recipients = request.Recipients.Select(recipient => new EmailAddress(recipient)).ToList();
 
+            // Construct the email message
             var emailMessage = new EmailMessage(
                 senderAddress: senderAddress,
                 content: new EmailContent(request.Subject)
